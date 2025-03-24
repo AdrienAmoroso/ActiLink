@@ -32,6 +32,12 @@ import android.location.Location
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.layout.padding
+
 
 
 class MainActivity : ComponentActivity() {
@@ -74,9 +80,9 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Si la permission est accordée, afficher la carte
+                    // Si la permission est accordée, afficher la main screen
                     if (permissionGranted) {
-                        MyMap()
+                        MainScreen()
                     } else {
                         // Gérer le cas où la permission n'est pas accordée
                         // TODO: Afficher un message à l'utilisateur
@@ -144,3 +150,46 @@ fun MyMap(modifier: Modifier = Modifier) {
         properties = mapProperties
     )
 }
+
+sealed class Screen(val route: String, val title: String) {
+    object Map : Screen("map", "Carte")
+    object Profile : Screen("profile", "Profil")
+}
+
+@Composable
+fun BottomNavigationBar(currentScreen: String, onItemSelected: (Screen) -> Unit) {
+    NavigationBar {
+        NavigationBarItem(
+            selected = currentScreen == Screen.Map.route,
+            onClick = { onItemSelected(Screen.Map) },
+            label = { Text(Screen.Map.title) },
+            icon = { Icon(Icons.Default.Place, contentDescription = null) }
+        )
+        NavigationBarItem(
+            selected = currentScreen == Screen.Profile.route,
+            onClick = { onItemSelected(Screen.Profile) },
+            label = { Text(Screen.Profile.title) },
+            icon = { Icon(Icons.Default.Person, contentDescription = null) }
+        )
+    }
+}
+
+@Composable
+fun MainScreen() {
+    var selectedScreen by remember { mutableStateOf<Screen>(Screen.Map) }
+
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(
+                currentScreen = selectedScreen.route,
+                onItemSelected = { selectedScreen = it }
+            )
+        }
+    ) { paddingValues ->
+        when (selectedScreen) {
+            is Screen.Map -> MyMap(modifier = Modifier.padding(paddingValues))
+            is Screen.Profile -> GreetingPreview()
+        }
+    }
+}
+
