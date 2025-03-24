@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "506086650504",
+    "project_id": "actilink-4b448",
+    "storage_bucket": "actilink-4b448.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506086650504:android:14a41f9be505657c55253d",
+        "android_client_info": {
+          "package_name": "com.actilink"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpkGtF2AwzGNIC0i-NyGa8ZWbW4NNBpAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506086650504:android:a969234ff0e852c655253d",
+        "android_client_info": {
+          "package_name": "com.uqac.actilink"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpkGtF2AwzGNIC0i-NyGa8ZWbW4NNBpAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
