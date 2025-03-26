@@ -30,8 +30,14 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import android.location.Location
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.uqac.actilink.services.FirebaseService
+import com.uqac.actilink.ui.screens.AuthScreen
+import com.uqac.actilink.viewmodel.ActivityViewModel
+import com.uqac.actilink.viewmodel.AuthViewModel
+import com.uqac.actilink.ui.screens.ActivityScreen
 
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +45,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            /*ActivityScreen(ActivityViewModel(FirebaseService()));
+            * AuthScreen(AuthViewModel());*/
             ActiLinkTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),

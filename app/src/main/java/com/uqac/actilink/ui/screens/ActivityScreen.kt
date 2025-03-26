@@ -8,11 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.uqac.actilink.viewmodel.ActivityViewModel
 
 @Composable
-fun ActivityScreen(viewModel: ActivityViewModel = viewModel()) {
+fun ActivityScreen( viewModel: ActivityViewModel) {
     val activities by viewModel.activities.collectAsState()
 
     var title by remember { mutableStateOf(TextFieldValue()) }
