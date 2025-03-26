@@ -1,5 +1,9 @@
 package com.uqac.actilink
 
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,8 +19,6 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -137,10 +139,19 @@ fun MyMap(modifier: Modifier = Modifier) {
         position = CameraPosition.fromLatLngZoom(userLocation ?: LatLng(0.0,0.0), 10f)
     }
 
+    val montrealCoordinates = LatLng(45.5017, -73.5673) // Latitude, Longitude
+
     GoogleMap(
         modifier = modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
         uiSettings = mapUiSettings,
         properties = mapProperties
-    )
+    ) {
+        // Ajouter un marqueur à Montréal
+        Marker(
+            state = MarkerState(position = montrealCoordinates),
+            title = "Montréal",
+            snippet = "Ville de Montréal"
+        )
+    }
 }
