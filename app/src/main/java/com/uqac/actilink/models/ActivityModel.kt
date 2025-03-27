@@ -7,5 +7,7 @@ data class ActivityModel(
     val dateTime: String = "",
     val location: String = "",
     val creatorId: String = "",
-    val participants: List<String> = emptyList()
+    val participants: List<String> = emptyList(),
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
 )

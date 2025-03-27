@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -23,15 +22,10 @@ import com.uqac.actilink.viewmodel.MapViewModel
 @SuppressLint("MissingPermission")
 @Composable
 fun MapGoogle(mapViewModel: MapViewModel) {
-    // Collect the current camera position from the ViewModel
     val currentCameraPosition by mapViewModel.cameraPosition.collectAsState()
-
-    // Collect the markers list
     val markersList by mapViewModel.markers.collectAsState()
-
     var mapUiSettings by remember { mutableStateOf(MapUiSettings(myLocationButtonEnabled = true)) }
 
-    // wait for the position before creating the map
     if (currentCameraPosition != null) {
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(currentCameraPosition!!, 10f)
@@ -42,10 +36,11 @@ fun MapGoogle(mapViewModel: MapViewModel) {
             uiSettings = mapUiSettings,
             properties = MapProperties(isMyLocationEnabled = true)
         ) {
-            markersList.forEach { latLng ->
+            markersList.forEach { marker ->
                 Marker(
-                    state = MarkerState(position = latLng),
-                    title = "Marker in ($latLng)", // Customize the marker if needed
+                    state = MarkerState(position = marker.position),
+                    title = marker.title,
+                    snippet = marker.snippet
                 )
             }
         }

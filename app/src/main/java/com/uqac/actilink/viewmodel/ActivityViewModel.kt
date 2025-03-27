@@ -9,7 +9,10 @@ import com.uqac.actilink.models.ActivityModel
 import com.uqac.actilink.services.FirebaseService
 import java.util.UUID
 
-class ActivityViewModel(private val repository: FirebaseService) : ViewModel() {
+class ActivityViewModel : ViewModel() {
+
+    // Instance par défaut de FirebaseService
+    private val repository: FirebaseService = FirebaseService()
 
     private val _activities = MutableStateFlow<List<ActivityModel>>(emptyList())
     val activities: StateFlow<List<ActivityModel>> = _activities
@@ -25,14 +28,16 @@ class ActivityViewModel(private val repository: FirebaseService) : ViewModel() {
         }
     }
 
-    // Ajouter une activité
-    fun addActivity(title: String, date: String, location: String, userId: String) {
+    // Ajouter une activité en incluant les coordonnées
+    fun addActivity(title: String, date: String, location: String, userId: String, latitude: Double, longitude: Double) {
         val activity = ActivityModel(
             id = UUID.randomUUID().toString(),
             title = title,
             dateTime = date,
             location = location,
-            creatorId = userId
+            creatorId = userId,
+            latitude = latitude,
+            longitude = longitude
         )
 
         viewModelScope.launch {
