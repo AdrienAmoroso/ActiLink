@@ -14,9 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ActiLink"
         tools:targetApi="31">
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCsCkQ7xeyLfgQvA4CXiCKequghSSVadRE" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -28,6 +25,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCsCkQ7xeyLfgQvA4CXiCKequghSSVadRE" />
     </application>
 
 </manifest>
