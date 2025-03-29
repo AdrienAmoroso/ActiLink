@@ -13,38 +13,39 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.uqac.actilink.viewmodel.AuthViewModel
 
-/**
- * [AuthScreen] gère l’écran de connexion
- *
- * @param onSignUpClick Callback appelé lorsque l’utilisateur veut aller vers
- *                      un écran d’inscription (SignUpScreen)
- * @param onLoginSuccess Callback appelé lorsque la connexion est réussie
- *
- */
 @Composable
-fun AuthScreen(
+fun SignUpScreen(
     viewModel: AuthViewModel,
-    onSignUpClick: () -> Unit,
-    onLoginSuccess: () -> Unit  // On gardera si tu veux l’utiliser depuis un bouton "Aller à la carte"
+    onSignUpComplete: () -> Unit,
+    onCancel: () -> Unit
 ) {
-    // Champs, erreurs, etc.
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-
-    val authMessage by viewModel.authMessage.collectAsState()
-    val isAuthenticated by viewModel.isAuthenticated.collectAsState()
     val context = LocalContext.current
 
+    // Champs du formulaire
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    // Erreurs de validation
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+
+    // Observe l'état d'authentification
+    val authMessage by viewModel.authMessage.collectAsState()
+    val isAuthenticated by viewModel.isAuthenticated.collectAsState()
+
+    // Affiche le message d’erreur ou de succès de Firebase (renvoyé par AuthViewModel)
     authMessage?.let {
         Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
     }
 
-    if (!isAuthenticated) {
-        // -----------------------
-        // UTILISATEUR NON CONNECTÉ => FORMULAIRE DE CONNEXION
-        // -----------------------
+    // Si déjà connecté => l’inscription est terminée avec succès
+    if (isAuthenticated) {
+        LaunchedEffect(Unit) {
+            onSignUpComplete()
+        }
+    } else {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -52,10 +53,15 @@ fun AuthScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text("Créer un compte", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Champ Email
             OutlinedTextField(
                 value = email,
                 onValueChange = { input ->
                     email = input
+                    // Validation
                     emailError = if (input.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(input).matches()) {
                         "Email invalide"
                     } else null
@@ -64,83 +70,84 @@ fun AuthScreen(
                 isError = (emailError != null),
                 modifier = Modifier.fillMaxWidth()
             )
+            // Affichage d'erreur pour l'email
             emailError?.let {
                 Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Champ Mot de passe
             OutlinedTextField(
                 value = password,
                 onValueChange = { input ->
                     password = input
-                    passwordError = if (input.isEmpty()) "Mot de passe requis" else null
+                    // Vérification minimale (longueur > 5 par exemple)
+                    passwordError = if (input.length < 6) {
+                        "Mot de passe trop court (6 caractères minimum)"
+                    } else null
                 },
                 label = { Text("Mot de passe") },
                 visualTransformation = PasswordVisualTransformation(),
                 isError = (passwordError != null),
                 modifier = Modifier.fillMaxWidth()
             )
+            // Affichage d'erreur pour le mot de passe
             passwordError?.let {
+                Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Champ Confirmation du mot de passe
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { input ->
+                    confirmPassword = input
+                    // Vérification correspondance mot de passe
+                    confirmPasswordError = if (input != password) {
+                        "Les mots de passe ne correspondent pas"
+                    } else null
+                },
+                label = { Text("Confirmer le mot de passe") },
+                visualTransformation = PasswordVisualTransformation(),
+                isError = (confirmPasswordError != null),
+                modifier = Modifier.fillMaxWidth()
+            )
+            // Affichage d'erreur pour la confirmation
+            confirmPasswordError?.let {
                 Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Bouton "Se connecter"
+            // Bouton Validation
             Button(
-                onClick = { viewModel.login(email, password) },
-                enabled = (emailError == null && passwordError == null && email.isNotEmpty() && password.isNotEmpty()),
+                onClick = {
+                    // Vérifier que tous les champs sont valides avant d'appeler register
+                    val noErrors = (emailError == null && passwordError == null && confirmPasswordError == null)
+                            && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()
+
+                    if (noErrors) {
+                        viewModel.register(email, password)
+                    } else {
+                        Toast.makeText(context, "Veuillez corriger les champs invalides.", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Se connecter")
+                Text("Valider l'inscription")
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Bouton "S'inscrire"
-            Button(
-                onClick = { onSignUpClick() },
-                enabled = (emailError == null && passwordError == null),
+            // Bouton Annuler => retour à l'écran Auth
+            TextButton(
+                onClick = onCancel,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("S'inscrire")
-            }
-        }
-    } else {
-        // -----------------------
-        // UTILISATEUR CONNECTÉ => PAGE "PROFIL"
-        // -----------------------
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val userId by viewModel.userId.collectAsState()
-            Text("Utilisateur connecté avec ID: $userId")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Bouton de déconnexion
-            Button(
-                onClick = { viewModel.logout() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Se déconnecter")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Bouton (optionnel) "Aller à la carte" ou "Aller à l'accueil"
-            Button(
-                onClick = onLoginSuccess,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Aller à l'accueil")
+                Text("Annuler")
             }
         }
     }
 }
-

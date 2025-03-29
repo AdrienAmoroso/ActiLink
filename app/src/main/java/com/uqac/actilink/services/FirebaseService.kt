@@ -72,4 +72,87 @@ class FirebaseService {
             emptyList()
         }
     }
+
+    // Fonction pour peuplé la bdd
+    /*
+    suspend fun populateChicoutimiActivities(): Boolean {
+        return try {
+            // Exemple de liste d’activités autour de Chicoutimi
+            val fakeActivities = listOf(
+                ActivityModel(
+                    id = "chico-001",
+                    title = "Randonnée au Parc de la Rivière-du-Moulin",
+                    type = "Randonnée",
+                    dateTime = "2025-05-10",
+                    location = "Chicoutimi",
+                    creatorId = "admin",
+                    participants = emptyList(),
+                    latitude = 48.409995,  // Coordonnées approximatives
+                    longitude = -71.045893
+                ),
+                ActivityModel(
+                    id = "chico-002",
+                    title = "Course matinale sur le pont Dubuc",
+                    type = "Course",
+                    dateTime = "2025-05-11",
+                    location = "Chicoutimi",
+                    creatorId = "admin",
+                    participants = emptyList(),
+                    latitude = 48.423930,
+                    longitude = -71.065071
+                ),
+                ActivityModel(
+                    id = "chico-003",
+                    title = "Session de hockey au Centre Georges-Vézina",
+                    type = "Hockey",
+                    dateTime = "2025-06-01",
+                    location = "Saguenay (Chicoutimi)",
+                    creatorId = "admin",
+                    participants = emptyList(),
+                    latitude = 48.422275,
+                    longitude = -71.055049
+                ),
+                ActivityModel(
+                    id = "chico-004",
+                    title = "Atelier yoga au bord de la rivière Saguenay",
+                    type = "Yoga",
+                    dateTime = "2025-06-05",
+                    location = "Chicoutimi",
+                    creatorId = "admin",
+                    participants = emptyList(),
+                    latitude = 48.416580,
+                    longitude = -71.058880
+                ),
+                ActivityModel(
+                    id = "chico-005",
+                    title = "Marche culturelle dans le centre-ville",
+                    type = "Marche",
+                    dateTime = "2025-07-10",
+                    location = "Centre-ville Chicoutimi",
+                    creatorId = "admin",
+                    participants = emptyList(),
+                    latitude = 48.427300,
+                    longitude = -71.068700
+                )
+            )
+
+            // Pour chaque activité, on l'ajoute dans Firestore
+            fakeActivities.forEach { activity ->
+                db.collection("activities")
+                    .document(activity.id)
+                    .set(activity)
+                    .await()
+                Log.d("Firestore", "Activité '${activity.id}' ajoutée !")
+            }
+
+            // Si tout se passe bien, on renvoie true
+            true
+        } catch (e: Exception) {
+            Log.e("Firestore", "Erreur lors du peuplement des activités", e)
+            false
+        }
+    }
+    */
+
+
 }
