@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
 import com.uqac.actilink.viewmodel.ActivityViewModel
 
 @Composable
@@ -15,6 +16,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel, onBack: () -> Unit) {
     var location by remember { mutableStateOf(TextFieldValue()) }
     var latitude by remember { mutableStateOf(TextFieldValue()) }
     var longitude by remember { mutableStateOf(TextFieldValue()) }
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Ajouter une activité", style = MaterialTheme.typography.titleLarge)
@@ -64,14 +66,16 @@ fun AddActivityScreen(viewModel: ActivityViewModel, onBack: () -> Unit) {
                     val lng = longitude.text.toDoubleOrNull() ?: 0.0
 
                     // On appelle la fonction de création dans le ViewModel
-                    viewModel.addActivity(
-                        title = title.text,
-                        date = date.text,
-                        location = location.text,
-                        userId = "user_123",  // A remplacer par l'ID actuel
-                        latitude = lat,
-                        longitude = lng
-                    )
+                    if (userId != null) {
+                        viewModel.addActivity(
+                            title = title.text,
+                            date = date.text,
+                            location = location.text,
+                            userId = userId,  // A remplacer par l'ID actuel
+                            latitude = lat,
+                            longitude = lng
+                        )
+                    }
 
                     // Option : vider les champs ou revenir à la liste
                     // Ici on redirige vers la liste

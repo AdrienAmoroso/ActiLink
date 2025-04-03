@@ -36,9 +36,6 @@ fun SignUpScreen(
     val isAuthenticated by viewModel.isAuthenticated.collectAsState()
 
     // Affiche le message d’erreur ou de succès de Firebase (renvoyé par AuthViewModel)
-    authMessage?.let {
-        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-    }
 
     // Si déjà connecté => l’inscription est terminée avec succès
     if (isAuthenticated) {

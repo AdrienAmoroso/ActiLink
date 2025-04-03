@@ -179,7 +179,7 @@ class MainActivity : ComponentActivity() {
                                         mapViewModel.updateMarkersFromActivities(activities)
                                     }
                                     mapViewModel.getUserLocation(this@MainActivity, fusedLocationClient)
-                                    MapGoogle(mapViewModel = mapViewModel)
+                                    MapGoogle(mapViewModel = mapViewModel, activityViewModel = activityViewModel)
                                 } else {
                                     // Sinon, on retourne sur Auth
                                     selectedScreen = Screen.Auth

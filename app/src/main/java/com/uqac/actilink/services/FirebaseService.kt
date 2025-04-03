@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.uqac.actilink.models.ActivityModel
 
 
@@ -63,6 +64,15 @@ class FirebaseService {
         }
     }
 
+    suspend fun deleteActivity(activityId: String): Result<Unit> {
+        return try {
+            db.collection("activities").document(activityId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // Récupérer toutes les activités
     suspend fun getActivities(): List<ActivityModel> {
         return try {
@@ -70,6 +80,40 @@ class FirebaseService {
             result.documents.mapNotNull { it.toObject(ActivityModel::class.java) }
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    suspend fun joinActivity(activityId: String): Result<Unit> {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return Result.failure(Exception("Utilisateur non authentifié"))
+        val activityRef = db.collection("activities").document(activityId)
+
+        return try {
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(activityRef)
+                val currentParticipants = snapshot.get("participants") as? List<String> ?: emptyList()
+
+                if (!currentParticipants.contains(userId)) {
+                    val updatedParticipants = currentParticipants + userId
+                    transaction.update(activityRef, "participants", updatedParticipants)
+                }
+            }.await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun leaveActivity(activityId: String): Result<Unit> {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return Result.failure(Exception("Utilisateur non authentifié"))
+        val activityRef = db.collection("activities").document(activityId)
+        return try {
+
+            // Supprime l'utilisateur de la liste des participants
+            activityRef.update("participants", FieldValue.arrayRemove(userId)).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

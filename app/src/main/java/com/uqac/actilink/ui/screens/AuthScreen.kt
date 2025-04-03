@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
 import com.uqac.actilink.viewmodel.AuthViewModel
 
 /**
@@ -37,9 +38,6 @@ fun AuthScreen(
     val isAuthenticated by viewModel.isAuthenticated.collectAsState()
     val context = LocalContext.current
 
-    authMessage?.let {
-        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-    }
 
     if (!isAuthenticated) {
         // -----------------------
