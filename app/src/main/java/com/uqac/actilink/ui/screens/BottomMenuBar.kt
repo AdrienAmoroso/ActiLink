@@ -18,7 +18,7 @@ import com.uqac.actilink.Screen
  * @param selectedScreen L’écran actuel pour colorer l’icône correspondante
  * @param onScreenSelected Callback pour changer d’écran
  * @param isAuthenticated Indique si l’utilisateur est connecté ou non (pour désactiver certains boutons)
- */
+ **/
 @Composable
 fun BottomMenuBar(
     selectedScreen: Screen,
