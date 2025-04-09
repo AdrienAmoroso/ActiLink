@@ -17,15 +17,18 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.uqac.actilink.viewmodel.ActivityViewModel
 import com.uqac.actilink.viewmodel.MapViewModel
 
 @SuppressLint("MissingPermission")
 @Composable
-fun MapGoogle(mapViewModel: MapViewModel) {
+fun MapGoogle(mapViewModel: MapViewModel, activityViewModel: ActivityViewModel) {
     val currentCameraPosition by mapViewModel.cameraPosition.collectAsState()
     val markersList by mapViewModel.markers.collectAsState()
+    val activities by activityViewModel.activities.collectAsState()
     var mapUiSettings by remember { mutableStateOf(MapUiSettings(myLocationButtonEnabled = true)) }
 
+    mapViewModel.updateMarkersFromActivities(activities)
     if (currentCameraPosition != null) {
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(currentCameraPosition!!, 10f)

@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.uqac.actilink.viewmodel.ActivityViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ActivityListScreen(
@@ -55,8 +56,39 @@ fun ActivityListScreen(
                         Text(text = activity.title, style = MaterialTheme.typography.titleLarge)
                         Text(text = "Lieu : ${activity.location}")
                         Text(text = "Date : ${activity.dateTime}")
-                        Text(text = "Type : ${activity.type}")
-                        Text(text = "Coordonnées : ${activity.latitude}, ${activity.longitude}")
+                        Text(text = "creator : ${activity.creatorId}")
+                        Text(text = "Participants : ${activity.participants.size}") // Vérifie bien la taille
+
+                        val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+                        if (userId != null && !activity.participants.contains(userId)) {
+                            Button(
+                                onClick = { viewModel.joinActivity(activity.id) },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Participer")
+                            }
+                        } else {
+                            Text("Vous participez déjà à cette activité", color = MaterialTheme.colorScheme.primary)
+                            Button(
+                                onClick = { viewModel.leaveActivity(activity.id) },
+                                modifier = Modifier.padding(top = 8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Quitter")
+                            }
+                        }
+
+                        // Vérifie si l'utilisateur est le créateur de l'activité
+                        if (userId == activity.creatorId) {
+                            Button(
+                                onClick = { viewModel.deleteActivity(activity.id) },
+                                modifier = Modifier.padding(top = 8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Supprimer")
+                            }
+                        }
                     }
                 }
             }

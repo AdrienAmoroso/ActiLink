@@ -55,6 +55,33 @@ class ActivityViewModel : ViewModel() {
         loadActivities()
     }
 
+    fun joinActivity(activityId: String) {
+        viewModelScope.launch {
+            val result = repository.joinActivity(activityId)
+            result.onSuccess {
+                println("Utilisateur ajouté à l'activité !")
+                loadActivities()
+            }.onFailure { error ->
+                println("Erreur : ${error.message}")
+            }
+        }
+    }
+
+    fun leaveActivity(activityId: String) {
+        viewModelScope.launch {
+            val result = repository.leaveActivity(activityId)
+
+            result.onSuccess {
+                println("Utilisateur retiré de l'activité !")
+
+                // Rafraîchir la liste après modification
+                loadActivities()
+            }.onFailure { error ->
+                println("Erreur : ${error.message}")
+            }
+        }
+    }
+
     // Charger les activités depuis Firestore
     fun loadActivities() {
         viewModelScope.launch {
@@ -92,6 +119,21 @@ class ActivityViewModel : ViewModel() {
             val success = repository.addActivity(activity)
             if (success) {
                 loadActivities()
+            }
+        }
+    }
+
+    fun deleteActivity(activityId: String) {
+        viewModelScope.launch {
+            val result = repository.deleteActivity(activityId)
+
+            result.onSuccess {
+                println("Activité supprimée avec succès !")
+
+                // Rafraîchir la liste après suppression
+                loadActivities()
+            }.onFailure { error ->
+                println("Erreur : ${error.message}")
             }
         }
     }
