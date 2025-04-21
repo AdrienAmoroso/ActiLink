@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.android.gms.maps.model.LatLng
 import com.uqac.actilink.viewmodel.ActivityViewModel
 import java.text.SimpleDateFormat
@@ -37,7 +38,13 @@ fun AddActivityScreen(viewModel: ActivityViewModel, onBack: () -> Unit) {
     var isMapVisible by remember { mutableStateOf(false) }
     var showDatePickerDialog by remember { mutableStateOf(false) }
 
+    var userId = FirebaseAuth.getInstance().currentUser?.uid
     val datePickerState = rememberDatePickerState()
+
+    if (userId == null) {
+        // Handle the case where the user is not logged in
+        userId = "user_123"
+    }
 
     if (isMapVisible) {
         MapScreen { latLng ->
@@ -124,7 +131,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel, onBack: () -> Unit) {
                             title = title.text,
                             date = date,
                             location = location.text,
-                            userId = "user_123",
+                            userId = userId,
                             latitude = lat,
                             longitude = lng
                         )

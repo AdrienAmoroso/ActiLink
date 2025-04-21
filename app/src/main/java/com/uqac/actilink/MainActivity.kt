@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -179,7 +180,7 @@ class MainActivity : ComponentActivity() {
                                         mapViewModel.updateMarkersFromActivities(activities)
                                     }
                                     mapViewModel.getUserLocation(this@MainActivity, fusedLocationClient)
-                                    MapGoogle(mapViewModel = mapViewModel)
+                                    MapGoogle(mapViewModel = mapViewModel, activityViewModel = activityViewModel)
                                 } else {
                                     // Sinon, on retourne sur Auth
                                     selectedScreen = Screen.Auth
@@ -215,12 +216,7 @@ class MainActivity : ComponentActivity() {
 
                             Screen.Settings -> {
                                 if (currentUser != null) {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text("Settings Screen", style = MaterialTheme.typography.titleLarge)
-                                    }
+                                    SettingsScreen(mapViewModel = mapViewModel)
                                 } else {
                                     selectedScreen = Screen.Auth
                                 }
@@ -230,5 +226,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SettingsScreen(mapViewModel: MapViewModel) {
+    val allowedDistance by mapViewModel.allowedDistance.collectAsState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Distance de visibilité des activités : ${allowedDistance.toInt()} km",
+            style = MaterialTheme.typography.titleMedium
+        )
+        Slider(
+            value = allowedDistance,
+            onValueChange = { newValue -> mapViewModel.setAllowedDistance(newValue) },
+            valueRange = 1f..160f,
+            steps = 160,
+            modifier = Modifier.padding(top = 16.dp)
+        )
     }
 }

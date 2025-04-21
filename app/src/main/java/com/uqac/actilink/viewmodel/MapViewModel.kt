@@ -20,7 +20,7 @@ data class ActivityMarker(
 
 class MapViewModel : ViewModel() {
 
-    // Position de la caméra
+    // Position de la caméra / utilisateur
     private val _cameraPosition = MutableStateFlow<LatLng?>(null)
     val cameraPosition: StateFlow<LatLng?> = _cameraPosition.asStateFlow()
 
@@ -59,9 +59,19 @@ class MapViewModel : ViewModel() {
                 val userLatLng = LatLng(location.latitude, location.longitude)
                 updateCameraPosition(userLatLng)
             } else {
+                // Localisation par défaut
                 val defaultLocation = LatLng(48.8584, 2.2945)
                 updateCameraPosition(defaultLocation)
             }
         }
     }
+
+    // Rayon autorisé en kilomètres (par défaut 10 km)
+    private val _allowedDistance = MutableStateFlow<Float>(10f)
+    val allowedDistance: StateFlow<Float> = _allowedDistance.asStateFlow()
+
+    fun setAllowedDistance(distance: Float) {
+        _allowedDistance.value = distance
+    }
 }
+

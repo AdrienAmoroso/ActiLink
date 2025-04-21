@@ -45,6 +45,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("com.google.maps.android:android-maps-utils:3.5.3") // Or the latest version
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // Or
+    implementation("com.google.android.material:material:1.12.0")
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
