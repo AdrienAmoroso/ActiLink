@@ -25,6 +25,9 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+    var bio by remember { mutableStateOf("") }
 
     // Erreurs de validation
     var emailError by remember { mutableStateOf<String?>(null) }
@@ -52,6 +55,15 @@ fun SignUpScreen(
         ) {
             Text("Créer un compte", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Champ Nom
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nom") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Champ Email
             OutlinedTextField(
@@ -116,6 +128,26 @@ fun SignUpScreen(
                 Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Champ Âge
+            OutlinedTextField(
+                value = age,
+                onValueChange = { age = it },
+                label = { Text("Âge") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Champ Bio
+            OutlinedTextField(
+                value = bio,
+                onValueChange = { bio = it },
+                label = { Text("Bio") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Bouton Validation
@@ -126,7 +158,17 @@ fun SignUpScreen(
                             && email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()
 
                     if (noErrors) {
-                        viewModel.register(email, password)
+                        viewModel.registerWithProfile(
+                            email = email,
+                            password = password,
+                            name = name,
+                            age = age.toIntOrNull() ?: 0,
+                            bio = bio
+                        ) { profileCreated ->
+                            if (!profileCreated) {
+                                Toast.makeText(context, "Erreur lors de la création du profil ❌", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     } else {
                         Toast.makeText(context, "Veuillez corriger les champs invalides.", Toast.LENGTH_SHORT).show()
                     }

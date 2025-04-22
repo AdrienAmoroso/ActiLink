@@ -20,6 +20,12 @@ fun ActivityListScreen(
     // On récupère aussi la valeur actuelle du filtre
     val currentFilter by viewModel.filterText.collectAsState()
 
+    val joinedActivities by viewModel.joinedActivities.collectAsState()
+
+    LaunchedEffect(joinedActivities) {
+        viewModel.loadActivities()
+    }
+
     Column(modifier = Modifier.padding(16.dp)) {
         // Titre
         Text("Liste des activités", style = MaterialTheme.typography.titleLarge)

@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.uqac.actilink.models.ActivityModel
+import com.uqac.actilink.repository.ActivityRepository
 import com.uqac.actilink.services.FirebaseService
 import java.util.UUID
 
-class ActivityViewModel : ViewModel() {
+class ActivityViewModel(
+    private val activityRepository: ActivityRepository = ActivityRepository()
+) : ViewModel() {
 
     private val repository = FirebaseService()
 
@@ -55,46 +58,24 @@ class ActivityViewModel : ViewModel() {
         loadActivities()
     }
 
+    val joinedActivities: StateFlow<List<ActivityModel>> = activityRepository.joinedActivities
+
     fun joinActivity(activityId: String) {
+        val userId = repository.getUserId() ?: return
         viewModelScope.launch {
-            val result = repository.joinActivity(activityId)
-            result.onSuccess {
-                println("Utilisateur ajouté à l'activité !")
-                loadActivities()
-            }.onFailure { error ->
-                println("Erreur : ${error.message}")
-            }
+            activityRepository.joinActivity(activityId, userId)
+            loadActivities()
         }
     }
 
     fun leaveActivity(activityId: String) {
+        val userId = repository.getUserId() ?: return
         viewModelScope.launch {
-            val result = repository.leaveActivity(activityId)
-
-            result.onSuccess {
-                println("Utilisateur retiré de l'activité !")
-
-                // Rafraîchir la liste après modification
-                loadActivities()
-            }.onFailure { error ->
-                println("Erreur : ${error.message}")
-            }
+            activityRepository.leaveActivity(activityId, userId)
+            loadActivities()
         }
     }
 
-    // Charger les activités depuis Firestore
-    fun loadActivities() {
-        viewModelScope.launch {
-            _activities.value = repository.getActivities()
-        }
-    }
-
-    // Mettre à jour le texte du filtre
-    fun updateFilter(newFilter: String) {
-        _filterText.value = newFilter
-    }
-
-    // Ajouter une activité
     fun addActivity(
         title: String,
         date: String,
@@ -102,7 +83,7 @@ class ActivityViewModel : ViewModel() {
         userId: String,
         latitude: Double,
         longitude: Double,
-        type: String = ""   // si tu veux renseigner le type
+        type: String = ""
     ) {
         val activity = ActivityModel(
             id = UUID.randomUUID().toString(),
@@ -116,11 +97,21 @@ class ActivityViewModel : ViewModel() {
         )
 
         viewModelScope.launch {
-            val success = repository.addActivity(activity)
-            if (success) {
-                loadActivities()
-            }
+            activityRepository.addActivity(activity)
+            loadActivities()
         }
+    }
+
+    // Charger les activités depuis Firestore
+    fun loadActivities() {
+        viewModelScope.launch {
+            _activities.value = repository.getActivities()
+        }
+    }
+
+    // Mettre à jour le texte du filtre
+    fun updateFilter(newFilter: String) {
+        _filterText.value = newFilter
     }
 
     fun deleteActivity(activityId: String) {
