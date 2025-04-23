@@ -6,6 +6,7 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.uqac.actilink.models.ActivityModel
+import com.uqac.actilink.models.UserProfile
 
 
 class FirebaseService {
@@ -39,6 +40,17 @@ class FirebaseService {
                     onResult(false, task.exception?.message ?: "Erreur inconnue ❌", null)
                 }
             }
+    }
+
+    suspend fun createUserProfile(userId: String, name: String, age: Int, bio: String): Boolean {
+        return try {
+            val userProfile = UserProfile(userId = userId, name = name, age = age, bio = bio)
+            db.collection("users").document(userId).set(userProfile).await()
+            true
+        } catch (e: Exception) {
+            Log.e("Firestore", "Erreur création profil", e)
+            false
+        }
     }
 
     // Vérifier si un utilisateur est connecté
@@ -83,6 +95,21 @@ class FirebaseService {
         }
     }
 
+    suspend fun getUserProfile(userId: String): UserProfile? {
+        return try {
+            val userDocRef = db.collection("users").document(userId)
+            val documentSnapshot = userDocRef.get().await()
+            if (documentSnapshot.exists()) {
+                documentSnapshot.toObject(UserProfile::class.java)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     suspend fun joinActivity(activityId: String): Result<Unit> {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return Result.failure(Exception("Utilisateur non authentifié"))
         val activityRef = db.collection("activities").document(activityId)
@@ -114,6 +141,20 @@ class FirebaseService {
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun getJoinedActivities(userId: String): List<ActivityModel> {
+        return try {
+            val result = db.collection("activities")
+                .whereArrayContains("participants", userId)
+                .get()
+                .await()
+
+            result.documents.mapNotNull { it.toObject(ActivityModel::class.java) }
+        } catch (e: Exception) {
+            Log.e("Firestore", "Erreur récupération activités rejointes", e)
+            emptyList()
         }
     }
 
