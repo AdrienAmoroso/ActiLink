@@ -1,6 +1,6 @@
+// viewmodel/AuthViewModel.kt
 package com.uqac.actilink.viewmodel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.uqac.actilink.models.ActivityModel
@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class AuthViewModel(private val activityRepository: ActivityRepository = ActivityRepository()) : ViewModel() {
+class AuthViewModel(
+    private val activityRepository: ActivityRepository = ActivityRepository()
+) : ViewModel() {
 
     private val repository = FirebaseService()
 
@@ -24,38 +26,58 @@ class AuthViewModel(private val activityRepository: ActivityRepository = Activit
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
-    val joinedActivities: StateFlow<List<ActivityModel>> = activityRepository.joinedActivities
-
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile
 
-    fun loadUserProfile(userId: String) {
-        viewModelScope.launch {
-            val profile = repository.getUserProfile(userId)
-            _userProfile.value = profile
+    val joinedActivities: StateFlow<List<ActivityModel>> = activityRepository.joinedActivities
+
+    init {
+        // Au lancement du ViewModel, on vérifie si l'utilisateur est déjà connecté
+        checkUserStatus()
+    }
+
+    /** Vérifie si un utilisateur est déjà connecté et charge ses données */
+    fun checkUserStatus() {
+        val uid = repository.getUserId()
+        _userId.value = uid
+        _isAuthenticated.value = uid != null
+        if (uid != null) {
+            loadJoinedActivities()
+            loadUserProfile(uid)
         }
     }
 
-    fun loadJoinedActivities() {
-        val userId = _userId.value ?: return
+    /** Charge le profil depuis Firestore */
+    private fun loadUserProfile(userId: String) {
         viewModelScope.launch {
-            activityRepository.loadJoinedActivities(userId)
-        }
-    }
-
-    fun login(email: String, password: String) {
-        repository.loginUser(email, password) { success, message, userId ->
-            _authMessage.value = message
-            _isAuthenticated.value = success
-            _userId.value = userId
-
-            if (success && userId != null) {
-                loadJoinedActivities()
-                loadUserProfile(userId)
+            repository.getUserProfile(userId)?.let {
+                _userProfile.value = it
             }
         }
     }
 
+    /** Charge les activités que l'utilisateur a rejointes */
+    fun loadJoinedActivities() {
+        val uid = _userId.value ?: return
+        viewModelScope.launch {
+            activityRepository.loadJoinedActivities(uid)
+        }
+    }
+
+    /** Effectue la connexion Firebase */
+    fun login(email: String, password: String) {
+        repository.loginUser(email, password) { success, message, uid ->
+            _authMessage.value = message
+            _isAuthenticated.value = success
+            _userId.value = uid
+            if (success && uid != null) {
+                loadJoinedActivities()
+                loadUserProfile(uid)
+            }
+        }
+    }
+
+    /** Inscription + création de profil */
     fun registerWithProfile(
         email: String,
         password: String,
@@ -64,17 +86,15 @@ class AuthViewModel(private val activityRepository: ActivityRepository = Activit
         bio: String,
         onProfileCreated: (Boolean) -> Unit
     ) {
-        repository.registerUser(email, password) { success, message, userId ->
+        repository.registerUser(email, password) { success, message, uid ->
             _authMessage.value = message
             _isAuthenticated.value = success
-            _userId.value = userId
-
-            if (success && userId != null) {
-                // Crée le profil utilisateur
-                kotlinx.coroutines.GlobalScope.launch {
-                    val created = repository.createUserProfile(userId, name, age, bio)
+            _userId.value = uid
+            if (success && uid != null) {
+                viewModelScope.launch {
+                    val created = repository.createUserProfile(uid, name, age, bio)
                     onProfileCreated(created)
-                    loadUserProfile(userId)
+                    loadUserProfile(uid)
                 }
             } else {
                 onProfileCreated(false)
@@ -82,23 +102,19 @@ class AuthViewModel(private val activityRepository: ActivityRepository = Activit
         }
     }
 
-    fun leaveActivity(activityId: String) {
-        val userId = repository.getUserId() ?: return
-        viewModelScope.launch {
-            activityRepository.leaveActivity(activityId, userId)
-            loadJoinedActivities()
-        }
-    }
-
+    /** Déconnexion Firebase */
     fun logout() {
         repository.logoutUser()
         _isAuthenticated.value = false
         _userId.value = null
     }
 
-    fun checkUserStatus() {
-        val userId = repository.getUserId()
-        _userId.value = userId
-        _isAuthenticated.value = userId != null
+    /** Quitter une activité */
+    fun leaveActivity(activityId: String) {
+        val uid = repository.getUserId() ?: return
+        viewModelScope.launch {
+            activityRepository.leaveActivity(activityId, uid)
+            loadJoinedActivities()
+        }
     }
 }

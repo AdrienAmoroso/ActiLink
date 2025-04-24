@@ -1,12 +1,17 @@
+// viewmodel/ActivityViewModel.kt
 package com.uqac.actilink.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import com.uqac.actilink.models.ActivityModel
 import com.uqac.actilink.repository.ActivityRepository
 import com.uqac.actilink.services.FirebaseService
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ActivityViewModel(
@@ -24,42 +29,45 @@ class ActivityViewModel(
     val filterText: StateFlow<String> = _filterText
 
     /**
-     * On combine la liste brute + le champ de recherche pour produire une liste filtrée.
-     * - On filtre sur title, location ou type, en ignorant la casse.
+     * Combine la liste brute + le champ de recherche pour produire une liste filtrée.
+     * Filtre sur title, location, type.
      */
     private val _filteredActivities: StateFlow<List<ActivityModel>> =
-        combine(_activities, _filterText) { allActivities, text ->
-            val query = text.trim().lowercase() // recherche en minuscules
-            if (query.isBlank()) {
-                // Pas de filtre => renvoie la liste brute
-                allActivities
-            } else {
-                // Filtre sur titre, lieu ou type
-                allActivities.filter { activity ->
-                    val titleMatch = activity.title.lowercase().contains(query)
-                    val locationMatch = activity.location.lowercase().contains(query)
-                    val typeMatch = activity.type.lowercase().contains(query)
-                    titleMatch || locationMatch || typeMatch
-                }
+        combine(_activities, _filterText) { all, text ->
+            val q = text.trim().lowercase()
+            if (q.isBlank()) all
+            else all.filter { a ->
+                a.title.lowercase().contains(q) ||
+                        a.location.lowercase().contains(q) ||
+                        a.type.lowercase().contains(q)
             }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = emptyList()
         )
-
-    /**
-     * Liste à afficher (déjà filtrée).
-     * Tu peux utiliser directement `filteredActivities` dans l'UI.
-     */
     val filteredActivities: StateFlow<List<ActivityModel>> = _filteredActivities
+
+    // Activités auxquelles l'utilisateur a déjà participé
+    val joinedActivities: StateFlow<List<ActivityModel>> = activityRepository.joinedActivities
 
     init {
         loadActivities()
     }
 
-    val joinedActivities: StateFlow<List<ActivityModel>> = activityRepository.joinedActivities
+    /** Charge toutes les activités depuis Firestore. */
+    fun loadActivities() {
+        viewModelScope.launch {
+            _activities.value = repository.getActivities()
+        }
+    }
 
+    /** Met à jour le texte de filtre. */
+    fun updateFilter(newFilter: String) {
+        _filterText.value = newFilter
+    }
+
+    /** Rejoint une activité, puis recharge la liste. */
     fun joinActivity(activityId: String) {
         val userId = repository.getUserId() ?: return
         viewModelScope.launch {
@@ -68,6 +76,7 @@ class ActivityViewModel(
         }
     }
 
+    /** Quitte une activité, puis recharge la liste. */
     fun leaveActivity(activityId: String) {
         val userId = repository.getUserId() ?: return
         viewModelScope.launch {
@@ -76,9 +85,15 @@ class ActivityViewModel(
         }
     }
 
+    /**
+     * Ajoute une nouvelle activité.
+     * @param type facultatif
+     */
     fun addActivity(
         title: String,
         date: String,
+        startTime: String,
+        endTime: String,
         location: String,
         userId: String,
         latitude: Double,
@@ -88,56 +103,40 @@ class ActivityViewModel(
         val activity = ActivityModel(
             id = UUID.randomUUID().toString(),
             title = title,
+            type = type,
             dateTime = date,
+            startTime = startTime,
+            endTime = endTime,
             location = location,
             creatorId = userId,
+            participants = emptyList(),
             latitude = latitude,
-            longitude = longitude,
-            type = type
+            longitude = longitude
         )
-
         viewModelScope.launch {
             activityRepository.addActivity(activity)
             loadActivities()
         }
     }
 
-    // Charger les activités depuis Firestore
-    fun loadActivities() {
+    /**
+     * Met à jour une activité existante.
+     * Firestore 'set' écrase le document existant avec même id.
+     */
+    fun updateActivity(activity: ActivityModel) {
         viewModelScope.launch {
-            _activities.value = repository.getActivities()
+            activityRepository.addActivity(activity)
+            loadActivities()
         }
     }
 
-    // Mettre à jour le texte du filtre
-    fun updateFilter(newFilter: String) {
-        _filterText.value = newFilter
-    }
-
+    /** Supprime une activité par son id. */
     fun deleteActivity(activityId: String) {
         viewModelScope.launch {
             val result = repository.deleteActivity(activityId)
-
             result.onSuccess {
-                println("Activité supprimée avec succès !")
-
-                // Rafraîchir la liste après suppression
                 loadActivities()
-            }.onFailure { error ->
-                println("Erreur : ${error.message}")
-            }
+            }.onFailure { /* gérer l’erreur si besoin */ }
         }
     }
-
-    // Fonction pour peuplé la bdd
-    /*
-    fun populateChicoutimi() {
-        viewModelScope.launch {
-            val success = repository.populateChicoutimiActivities()
-            if (success) {
-                // Ensuite, recharge la liste
-                loadActivities()
-            }
-        }
-    }*/
 }

@@ -41,6 +41,8 @@ android {
 }
 
 dependencies {
+
+    implementation("androidx.compose.material3:material3:1.1.0-alpha06")
     implementation("com.google.android.material:material:1.12.0")
     implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("com.google.maps.android:android-maps-utils:3.5.3") // Or the latest version
@@ -70,4 +72,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.compose.material:material:1.4.0")
+
 }

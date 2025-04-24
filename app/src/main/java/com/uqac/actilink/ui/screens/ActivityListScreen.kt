@@ -1,108 +1,130 @@
+// ui/screens/ActivityListScreen.kt
 package com.uqac.actilink.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.uqac.actilink.viewmodel.ActivityViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.uqac.actilink.models.ActivityModel
+import com.uqac.actilink.viewmodel.ActivityViewModel
 
 @Composable
 fun ActivityListScreen(
     viewModel: ActivityViewModel,
-    onAddActivityClick: () -> Unit
+    onAddActivityClick: () -> Unit,
+    onEditActivityClick: (ActivityModel) -> Unit
 ) {
-    // On récupère la liste filtrée depuis le ViewModel
     val filteredActivities by viewModel.filteredActivities.collectAsState()
-    // On récupère aussi la valeur actuelle du filtre
-    val currentFilter by viewModel.filterText.collectAsState()
+    val currentFilter       by viewModel.filterText.collectAsState()
+    val joinedActivities    by viewModel.joinedActivities.collectAsState()
 
-    val joinedActivities by viewModel.joinedActivities.collectAsState()
-
-    LaunchedEffect(joinedActivities) {
-        viewModel.loadActivities()
-    }
+    // recharge la liste à chaque changement
+    LaunchedEffect(joinedActivities) { viewModel.loadActivities() }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        // Titre
         Text("Liste des activités", style = MaterialTheme.typography.titleLarge)
 
-        // Bouton pour aller vers l'écran de création
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
-            onClick = { onAddActivityClick() },
-            modifier = Modifier.padding(vertical = 8.dp)
+            onClick  = onAddActivityClick,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Ajouter une activité")
         }
 
-        // Champ de recherche pour filtrer
+        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
-            value = currentFilter,
-            onValueChange = { newText ->
-                viewModel.updateFilter(newText)
-            },
-            label = { Text("Filtrer les activités (titre, lieu ou type)") },
-            modifier = Modifier.fillMaxWidth()
+            value         = currentFilter,
+            onValueChange = { viewModel.updateFilter(it) },
+            label         = { Text("Filtrer (titre, lieu, type)") },
+            modifier      = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Affichage de la liste filtrée
         LazyColumn {
             items(filteredActivities) { activity ->
+                // formattage "10h30-15h00"
+                val timeText = activity.startTime.replace(":", "h") +
+                        "-" +
+                        activity.endTime.replace(":", "h")
+
                 Card(
-                    modifier = Modifier
+                    modifier  = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
+                        .padding(vertical = 4.dp),
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = activity.title, style = MaterialTheme.typography.titleLarge)
-                        Text(text = "Lieu : ${activity.location}")
-                        Text(text = "Date : ${activity.dateTime}")
-                        Text(text = "creator : ${activity.creatorId}")
-                        Text(text = "Participants : ${activity.participants.size}") // Vérifie bien la taille
+                        Text(activity.title, style = MaterialTheme.typography.titleLarge)
+                        Text("Lieu : ${activity.location}")
+                        Text("Date : ${activity.dateTime}")
+                        Text("Heure : $timeText")
+                        Text("Participants : ${activity.participants.size}")
+
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         val userId = FirebaseAuth.getInstance().currentUser?.uid
-
-                        if (userId != null && !activity.participants.contains(userId)) {
-                            Button(
-                                onClick = { viewModel.joinActivity(activity.id) },
-                                modifier = Modifier.padding(top = 8.dp)
-                            ) {
-                                Text("Participer")
+                        Row(
+                            modifier            = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Modifier (couleur personnalisée)
+                            if (userId == activity.creatorId) {
+                                Button(
+                                    onClick = { onEditActivityClick(activity) },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondary,
+                                        contentColor   = MaterialTheme.colorScheme.onSecondary
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Modifier")
+                                }
                             }
-                        } else {
-                            Text("Vous participez déjà à cette activité", color = MaterialTheme.colorScheme.primary)
-                            Button(
-                                onClick = { viewModel.leaveActivity(activity.id) },
-                                modifier = Modifier.padding(top = 8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                            ) {
-                                Text("Quitter")
+                            // Participer
+                            if (userId != null && !activity.participants.contains(userId)) {
+                                Button(
+                                    onClick  = { viewModel.joinActivity(activity.id) },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Participer")
+                                }
                             }
-                        }
-
-                        // Vérifie si l'utilisateur est le créateur de l'activité
-                        if (userId == activity.creatorId) {
-                            Button(
-                                onClick = { viewModel.deleteActivity(activity.id) },
-                                modifier = Modifier.padding(top = 8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                            ) {
-                                Text("Supprimer")
+                            // Quitter
+                            else if (userId != null) {
+                                Button(
+                                    onClick = { viewModel.leaveActivity(activity.id) },
+                                    colors  = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.error
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Quitter")
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        // Bouton pour peuplé la bdd
-        /*Button(onClick = { viewModel.populateChicoutimi() }) {
-            Text("Populer Chicoutimi")
-        }*/
-
     }
 }

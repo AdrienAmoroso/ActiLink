@@ -1,3 +1,4 @@
+// viewmodel/MapViewModel.kt
 package com.uqac.actilink.viewmodel
 
 import android.annotation.SuppressLint
@@ -11,7 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.uqac.actilink.models.ActivityModel
 
-// Data class pour les marqueurs enrichis
+/**
+ * Data class pour représenter un marqueur enrichi
+ * avec position, titre et snippet (affiché dans l’infobulle).
+ */
 data class ActivityMarker(
     val position: LatLng,
     val title: String,
@@ -20,7 +24,7 @@ data class ActivityMarker(
 
 class MapViewModel : ViewModel() {
 
-    // Position de la caméra / utilisateur
+    // Position courante de la caméra / utilisateur
     private val _cameraPosition = MutableStateFlow<LatLng?>(null)
     val cameraPosition: StateFlow<LatLng?> = _cameraPosition.asStateFlow()
 
@@ -28,50 +32,47 @@ class MapViewModel : ViewModel() {
         _cameraPosition.value = newLatLng
     }
 
-    // Liste des marqueurs enrichis
+    // Liste des marqueurs à afficher
     private val _markers = MutableStateFlow<List<ActivityMarker>>(emptyList())
     val markers: StateFlow<List<ActivityMarker>> = _markers.asStateFlow()
 
-    fun addMarker(marker: ActivityMarker) {
-        _markers.value = _markers.value + marker
-    }
-
-    fun removeMarker(marker: ActivityMarker) {
-        _markers.value = _markers.value.filter { it != marker }
-    }
-
-    // Mettre à jour les marqueurs à partir d'une liste d'activités
+    /**
+     * Met à jour les marqueurs à partir des activités.
+     * On inclut la date et l’heure formatée ("10h30-15h00") dans le snippet.
+     */
     fun updateMarkersFromActivities(activities: List<ActivityModel>) {
         _markers.value = activities.map { activity ->
+            // format "HH:mm" → "H'h'mm"
+            val timeText = activity.startTime.replace(":", "h") +
+                    "-" +
+                    activity.endTime.replace(":", "h")
+
             ActivityMarker(
                 position = LatLng(activity.latitude, activity.longitude),
-                title = activity.title,
-                snippet = "Date: ${activity.dateTime} - Lieu: ${activity.location}"
+                title    = activity.title,
+                snippet  = "Date: ${activity.dateTime} • Heure: $timeText"
             )
         }
     }
 
-    // Récupérer la localisation de l'utilisateur
+    // Récupère la dernière localisation connue
     @SuppressLint("MissingPermission")
-    fun getUserLocation(context: Context, fusedLocationClient: FusedLocationProviderClient) {
-        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-            if (location != null) {
-                val userLatLng = LatLng(location.latitude, location.longitude)
-                updateCameraPosition(userLatLng)
-            } else {
-                // Localisation par défaut
-                val defaultLocation = LatLng(48.8584, 2.2945)
-                updateCameraPosition(defaultLocation)
-            }
+    fun getUserLocation(
+        context: Context,
+        fusedLocationClient: FusedLocationProviderClient
+    ) {
+        fusedLocationClient.lastLocation.addOnSuccessListener { loc: Location? ->
+            val latLng = loc?.let { LatLng(it.latitude, it.longitude) }
+                ?: LatLng(48.8584, 2.2945) // fallback à Paris
+            updateCameraPosition(latLng)
         }
     }
 
-    // Rayon autorisé en kilomètres (par défaut 10 km)
-    private val _allowedDistance = MutableStateFlow<Float>(10f)
+    // Rayon d’affichage autorisé (en km)
+    private val _allowedDistance = MutableStateFlow(10f)
     val allowedDistance: StateFlow<Float> = _allowedDistance.asStateFlow()
 
     fun setAllowedDistance(distance: Float) {
         _allowedDistance.value = distance
     }
 }
-
