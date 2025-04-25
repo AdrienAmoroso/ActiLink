@@ -32,6 +32,7 @@ class ActivityViewModel(
      * Combine la liste brute + le champ de recherche pour produire une liste filtrée.
      * Filtre sur title, location, type.
      */
+
     private val _filteredActivities: StateFlow<List<ActivityModel>> =
         combine(_activities, _filterText) { all, text ->
             val q = text.trim().lowercase()
@@ -47,6 +48,18 @@ class ActivityViewModel(
             initialValue = emptyList()
         )
     val filteredActivities: StateFlow<List<ActivityModel>> = _filteredActivities
+
+    private val _selectedActivity = MutableStateFlow<ActivityModel?>(null)
+    val selectedActivity: StateFlow<ActivityModel?> = _selectedActivity
+
+    fun selectActivity(activity: ActivityModel) {
+        _selectedActivity.value = activity
+    }
+
+    fun clearSelectedActivity() {
+        _selectedActivity.value = null
+    }
+
 
     // Activités auxquelles l'utilisateur a déjà participé
     val joinedActivities: StateFlow<List<ActivityModel>> = activityRepository.joinedActivities

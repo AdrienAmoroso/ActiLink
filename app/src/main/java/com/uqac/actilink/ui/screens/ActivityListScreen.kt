@@ -27,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.uqac.actilink.models.ActivityModel
 import com.uqac.actilink.viewmodel.ActivityViewModel
 
+
 @Composable
 fun ActivityListScreen(
     viewModel: ActivityViewModel,
@@ -50,6 +51,93 @@ fun ActivityListScreen(
         ) {
             Text("Ajouter une activité")
         }
+        val selectedActivity by viewModel.selectedActivity.collectAsState()
+        selectedActivity?.let { activity ->
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            val timeText = activity.startTime.replace(":", "h") + "-" + activity.endTime.replace(":", "h")
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Activité sélectionnée :", style = MaterialTheme.typography.titleMedium)
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(activity.title, style = MaterialTheme.typography.titleLarge)
+                    Text("Lieu : ${activity.location}")
+                    Text("Date : ${activity.dateTime}")
+                    Text("Heure : $timeText")
+                    Text("Participants : ${activity.participants.size}")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Modifier
+                        if (userId == activity.creatorId) {
+                            Button(
+                                onClick = { onEditActivityClick(activity) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary,
+                                    contentColor   = MaterialTheme.colorScheme.onSecondary
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Modifier")
+                            }
+                        }
+
+                        // Participer
+                        if (userId != null && !activity.participants.contains(userId)) {
+                            Button(
+                                onClick = {
+                                    viewModel.joinActivity(activity.id)
+                                    viewModel.clearSelectedActivity() },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Participer")
+                            }
+                            Button(
+                                onClick = {
+                                    viewModel.clearSelectedActivity()},
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Fermer")
+                            }
+                        }
+
+                        // Quitter
+                        else if (userId != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    viewModel.leaveActivity(activity.id)
+                                    viewModel.clearSelectedActivity()},
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Quitter l'activité")
+                            }
+                            Button(
+                                onClick = { viewModel.clearSelectedActivity()},
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Fermer")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
 
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(

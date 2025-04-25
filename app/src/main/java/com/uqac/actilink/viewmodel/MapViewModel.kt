@@ -75,4 +75,16 @@ class MapViewModel : ViewModel() {
     fun setAllowedDistance(distance: Float) {
         _allowedDistance.value = distance
     }
+
+    private val _goToActivityList = MutableStateFlow(false)
+    val goToActivityList: StateFlow<Boolean> = _goToActivityList
+
+    fun navigateToActivityList() {
+        _goToActivityList.value = true
+    }
+
+    fun resetNavigationFlag() {
+        _goToActivityList.value = false
+    }
+
 }

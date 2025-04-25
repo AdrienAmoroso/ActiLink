@@ -2,6 +2,7 @@
 package com.uqac.actilink.ui.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,12 +29,18 @@ import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.uqac.actilink.viewmodel.ActivityViewModel
 import com.uqac.actilink.viewmodel.MapViewModel
 import kotlin.math.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import com.google.maps.android.compose.*
+
+
+
+
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -58,7 +65,6 @@ fun MapGoogle(
             position = CameraPosition.fromLatLngZoom(currentCameraPosition!!, 10f)
         }
 
-        // Filtrer par distance et par texte
         val filtered = markersList
             .filter { distanceBetween(currentCameraPosition!!, it.position) <= allowedDistance * 1000 }
             .filter { it.title.contains(searchQuery, ignoreCase = true) }
@@ -70,21 +76,49 @@ fun MapGoogle(
                 uiSettings          = uiSettings,
                 properties          = MapProperties(isMyLocationEnabled = true)
             ) {
-                // Cercle de visibilité
                 Circle(
-                    center      = currentCameraPosition!!,
-                    radius      = (allowedDistance * 1000).toDouble(),
-                    fillColor   = Color(0x220000FF),
+                    center = currentCameraPosition!!,
+                    radius = (allowedDistance * 1000).toDouble(),
+                    fillColor = Color(0x220000FF),
                     strokeColor = Color.Blue,
                     strokeWidth = 2f
                 )
-                // Marqueurs
+
                 filtered.forEach { marker ->
-                    Marker(
-                        state   = MarkerState(position = marker.position),
-                        title   = marker.title,
-                        snippet = marker.snippet
-                    )
+                    val matchedActivity = activities.find {
+                        it.title == marker.title && marker.snippet.contains(it.dateTime)
+                    }
+
+                    matchedActivity?.let { activity ->
+                        MarkerInfoWindow(
+                            state = MarkerState(position = marker.position),
+                            onInfoWindowClick = {
+                                activityViewModel.selectActivity(activity)
+                                mapViewModel.navigateToActivityList()
+                            }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface, // Couleur de fond
+                                        shape = RoundedCornerShape(16.dp) // Bords arrondis
+                                    )
+                                    .padding(8.dp) // Espacement interne
+                            ) {
+                                Column(Modifier.padding(8.dp)) {
+                                    Text(marker.title, style = MaterialTheme.typography.titleMedium)
+                                    Text(marker.snippet)
+                                    Spacer(Modifier.height(4.dp))
+                                    Button(onClick = {
+                                        activityViewModel.selectActivity(activity)
+                                        mapViewModel.navigateToActivityList()
+                                    }) {
+                                        Text("Voir")
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

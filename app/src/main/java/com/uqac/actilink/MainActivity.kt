@@ -95,6 +95,15 @@ class MainActivity : ComponentActivity() {
                                 onCancel         = { selectedScreen = Screen.Auth }
                             )
                             Screen.Home -> {
+                                val goToActivityList by mapVM.goToActivityList.collectAsState()
+
+                                LaunchedEffect(goToActivityList) {
+                                    if (goToActivityList) {
+                                        selectedScreen = Screen.ActivityList
+                                        mapVM.resetNavigationFlag()
+                                    }
+                                }
+
                                 val activities by actVM.activities.collectAsState()
                                 LaunchedEffect(activities) {
                                     mapVM.updateMarkersFromActivities(activities)
